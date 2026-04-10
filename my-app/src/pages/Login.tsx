@@ -4,166 +4,141 @@ import "../styles/login.css"
 import { loginUser, registerUser } from "../api/api"
 import { useAuth } from "../context/AuthContext"
 
-function Login(){
+function Login() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
 
-const navigate = useNavigate()
-const { login } = useAuth()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [isLogin, setIsLogin] = useState(true)
 
-const [email, setEmail] = useState("")
-const [password, setPassword] = useState("")
-const [name, setName] = useState("")
-const [isLogin, setIsLogin] = useState(true)
+  const [emailError, setEmailError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [serverError, setServerError] = useState("")
 
-const [emailError, setEmailError] = useState("")
-const [passwordError, setPasswordError] = useState("")
-const [serverError, setServerError] = useState("")
-
-/* ---------- EMAIL VALIDATION ---------- */
-
-const validateEmail = (email: string) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-/* ---------- LOGIN HANDLER ---------- */
-
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
-
-  let valid = true
-  setServerError("")
-
-  if(!validateEmail(email)){
-    setEmailError("Enter a valid email address")
-    valid = false
-  } else {
-    setEmailError("")
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
 
-  if(password.length < 6){
-    setPasswordError("Password must be at least 6 characters")
-    valid = false
-  } else {
-    setPasswordError("")
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  if(!valid) return
+    let valid = true
+    setServerError("")
 
-  try {
-    const { data } = isLogin
-      ? await loginUser({ email, password })
-      : await registerUser({ name, email, password, role: "user" })
-
-    login(data)
-
-    if(data.role === "admin"){
-      navigate("/admin/dashboard")
+    if (!validateEmail(email)) {
+      setEmailError("Enter a valid email address")
+      valid = false
     } else {
-      navigate("/client/dashboard")
+      setEmailError("")
     }
 
-  } catch (err: any) {
-    setServerError(err.response?.data?.message || "Something went wrong")
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters")
+      valid = false
+    } else {
+      setPasswordError("")
+    }
+
+    if (!valid) return
+
+    try {
+      const { data } = isLogin
+        ? await loginUser({ email, password })
+        : await registerUser({ name, email, password })  // no role sent from frontend
+
+      login(data)
+
+      if (data.role === "admin") {
+        navigate("/admin/dashboard")
+      } else {
+        navigate("/client/dashboard")
+      }
+
+    } catch (err: any) {
+      setServerError(err.response?.data?.message || "Something went wrong")
+    }
   }
-}
 
-return(
+  return (
+    <div className="login-page">
 
-<div className="login-page">
+      <div className="brand-section">
+        <div className="brand-logo">Dopamind</div>
+        <p className="brand-tagline">
+          Track habits, improve productivity, and optimize your dopamine balance.
+        </p>
+      </div>
 
-<div className="brand-section">
+      <div className="login-section">
+        <div className="login-card">
 
-<div className="brand-logo">
-Dopamind
-</div>
+          <h2 className="login-title">
+            {isLogin ? "Login to your account" : "Create your account"}
+          </h2>
 
-<p className="brand-tagline">
-Track habits, improve productivity, and optimize your dopamine balance.
-</p>
+          {serverError && <p className="error">{serverError}</p>}
 
-</div>
+          <form onSubmit={handleSubmit}>
 
-<div className="login-section">
+            {!isLogin && (
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your full name"
+                />
+              </div>
+            )}
 
-<div className="login-card">
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+              {emailError && <p className="error">{emailError}</p>}
+            </div>
 
-<h2 className="login-title">
-{isLogin ? "Login to your account" : "Create your account"}
-</h2>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+              />
+              {passwordError && <p className="error">{passwordError}</p>}
+            </div>
 
-{serverError && <p className="error">{serverError}</p>}
+            <button className="login-btn">
+              {isLogin ? "Login" : "Register"}
+            </button>
 
-<form onSubmit={handleLogin}>
+          </form>
 
-{!isLogin && (
-<div className="form-group">
-<label>Name</label>
-<input
-  type="text"
-  value={name}
-  onChange={(e) => setName(e.target.value)}
-  placeholder="Your full name"
-/>
-</div>
-)}
+          <div className="login-footer">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            <span
+              onClick={() => setIsLogin(!isLogin)}
+              style={{ color: "#a78bfa", cursor: "pointer", marginLeft: "6px" }}
+            >
+              {isLogin ? "Register" : "Login"}
+            </span>
+          </div>
 
-<div className="form-group">
+          <div className="login-footer">Dopamind © 2026</div>
 
-<label>Email</label>
+        </div>
+      </div>
 
-<input
-type="text"
-value={email}
-onChange={(e) => setEmail(e.target.value)}
-placeholder="you@example.com"
-/>
-
-{emailError && <p className="error">{emailError}</p>}
-
-</div>
-
-<div className="form-group">
-
-<label>Password</label>
-
-<input
-type="password"
-value={password}
-onChange={(e) => setPassword(e.target.value)}
-placeholder="Enter password"
-/>
-
-{passwordError && <p className="error">{passwordError}</p>}
-
-</div>
-
-<button className="login-btn">
-{isLogin ? "Login" : "Register"}
-</button>
-
-</form>
-
-<div className="login-footer">
-{isLogin ? "Don't have an account?" : "Already have an account?"}
-<span
-  onClick={() => setIsLogin(!isLogin)}
-  style={{ color: "#a78bfa", cursor: "pointer", marginLeft: "6px" }}
->
-  {isLogin ? "Register" : "Login"}
-</span>
-</div>
-
-<div className="login-footer">
-Dopamind © 2026
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-)
-
+    </div>
+  )
 }
 
 export default Login
